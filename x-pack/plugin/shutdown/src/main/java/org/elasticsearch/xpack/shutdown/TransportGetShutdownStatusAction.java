@@ -211,18 +211,16 @@ public class TransportGetShutdownStatusAction extends TransportMasterNodeAction<
             var shardRouting = unassignedShards.get(0);
             ShardAllocationDecision decision = allocationService.explainShardAllocation(shardRouting, allocation);
 
-            return new ShutdownShardMigrationStatus(
-                SingleNodeShutdownMetadata.Status.STALLED,
-                unassignedShards.size(),
-                format(
-                    "shard [%s] [%s] of index [%s] is unassigned, see [%s] for details or use the cluster allocation explain API",
-                    shardRouting.shardId().getId(),
-                    shardRouting.primary() ? "primary" : "replica",
-                    shardRouting.index().getName(),
-                    NODE_ALLOCATION_DECISION_KEY
-                ),
-                decision
+            var reason = format(
+                "shard [%s] [%s] of index [%s] is unassigned, see [%s] for details or use the cluster allocation explain API",
+                shardRouting.shardId().getId(),
+                shardRouting.primary() ? "primary" : "replica",
+                shardRouting.index().getName(),
+                NODE_ALLOCATION_DECISION_KEY
             );
+            logger.info(reason);
+
+            return new ShutdownShardMigrationStatus(SingleNodeShutdownMetadata.Status.STALLED, unassignedShards.size(), reason, decision);
         }
 
         // The node is in `DiscoveryNodes`, but not `RoutingNodes` - so there are no shards assigned to it. We're done.
@@ -304,18 +302,16 @@ public class TransportGetShutdownStatusAction extends TransportMasterNodeAction<
             ShardRouting shardRouting = unmovableShard.get().v1();
             ShardAllocationDecision decision = unmovableShard.get().v2();
 
-            return new ShutdownShardMigrationStatus(
-                SingleNodeShutdownMetadata.Status.STALLED,
-                totalRemainingShards,
-                format(
-                    "shard [%s] [%s] of index [%s] cannot move, see [%s] for details or use the cluster allocation explain API",
-                    shardRouting.shardId().getId(),
-                    shardRouting.primary() ? "primary" : "replica",
-                    shardRouting.index().getName(),
-                    NODE_ALLOCATION_DECISION_KEY
-                ),
-                decision
+            var reason = format(
+                "shard [%s] [%s] of index [%s] cannot move, see [%s] for details or use the cluster allocation explain API",
+                shardRouting.shardId().getId(),
+                shardRouting.primary() ? "primary" : "replica",
+                shardRouting.index().getName(),
+                NODE_ALLOCATION_DECISION_KEY
             );
+            logger.info(reason);
+
+            return new ShutdownShardMigrationStatus(SingleNodeShutdownMetadata.Status.STALLED, totalRemainingShards, reason, decision);
         } else {
             return new ShutdownShardMigrationStatus(SingleNodeShutdownMetadata.Status.IN_PROGRESS, totalRemainingShards);
         }
